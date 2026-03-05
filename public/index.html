@@ -714,7 +714,7 @@ function renderTable() {
       <td>
         <button class="action-btn msg" onclick="showMsg('${p.id}')">✉ Msg</button>
         <button class="action-btn" onclick="advance('${p.id}')" title="Avanzar estado">→</button>
-        <button class="action-btn" style="border-color:rgba(249,115,22,0.4);color:#F97316;font-size:10px" onclick="markLlamar('${p.id}')">Sin WA</button>
+        <button class="action-btn" style="border-color:${p.sin_wa?'rgba(239,68,68,0.4)':'rgba(249,115,22,0.4)'};color:${p.sin_wa?'#EF4444':'#F97316'};font-size:10px" onclick="toggleSinWA('${p.id}')">${p.sin_wa?'✗ Sin WA':'Sin WA'}</button>
         <button class="action-btn" onclick="openEdit('${p.id}')">✏</button>
       </td>
     </tr>
@@ -724,9 +724,9 @@ function renderTable() {
 }
 
 function updateSubTabCounts() {
-  const llamar = prospects.filter(p => p.status === 'Llamar').length;
-  const total = prospects.filter(p => p.wa||(p.phone&&p.phone!=='(oculto en Doctoralia)')).length;
-  document.getElementById('subTabLlamarCount').textContent = `(${llamar})`;
+  const sinWA = prospects.filter(p => p.sin_wa).length;
+  const total = prospects.filter(p => (p.wa||p.phone)&&!p.sin_wa).length;
+  document.getElementById('subTabLlamarCount').textContent = `(${sinWA})`;
   document.getElementById('subTabProspectosCount').textContent = `(${total})`;
 }
 
@@ -735,9 +735,9 @@ async function advance(id) {
   const i = STATUS_ORDER.indexOf(p.status);
   if (i < STATUS_ORDER.length-2) { p.status = STATUS_ORDER[i+1]; await updateProspect(p); renderTable(); }
 }
-async function markLlamar(id) {
+async function toggleSinWA(id) {
   const p = prospects.find(x=>x.id===id); if (!p) return;
-  p.status = 'Llamar'; await updateProspect(p); renderTable();
+  p.sin_wa = !p.sin_wa; await updateProspect(p); renderTable();
 }
 
 // ── SUB-TAB SWITCHING ─────────────────────────────────────────────────────────
@@ -753,10 +753,10 @@ function switchSubTab(tab) {
 }
 
 function renderCallList() {
-  const list = prospects.filter(p => p.status === 'Llamar');
+  const list = prospects.filter(p => p.sin_wa);
   const el = document.getElementById('callList');
   document.getElementById('subTabLlamarCount').textContent = `(${list.length})`;
-  if (!list.length) { el.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:40px 0;text-align:center">Ningún prospecto marcado para llamar todavía.</div>'; return; }
+  if (!list.length) { el.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:40px 0;text-align:center">Ningún prospecto marcado como Sin WA todavía.</div>'; return; }
   el.innerHTML = list.map((p, i) => `
     <div style="display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--border)">
       <span style="color:var(--text-dim);font-size:12px;min-width:24px">${i+1}</span>
@@ -884,7 +884,7 @@ function renderBatch() {
   const gradeF=document.getElementById('batchGradeFilter').value, statusF=document.getElementById('batchStatusFilter').value, stepF=document.getElementById('batchStepFilter').value;
   let ps = prospects.filter(p => { const gradeOk=!gradeF||gradeF==='AB'?(gradeF===''||p.grade==='A'||p.grade==='B'):p.grade===gradeF; return gradeOk&&(!statusF||p.status===statusF); });
   function buildMsg(p) { if(stepF==='1') return getIceBreaker(p,'wa'); if(stepF==='2a') return getPitch(p,'wa','asistente'); return getPitch(p,'wa','medico'); }
-  const waList=ps.filter(p=>p.wa||p.phone), phoneList=ps.filter(p=>!p.wa&&p.phone&&p.phone!=='(oculto en Doctoralia)'), noContact=ps.filter(p=>!p.wa&&(!p.phone||p.phone==='(oculto en Doctoralia)')).length;
+  const waList=ps.filter(p=>(p.wa||p.phone)&&!p.sin_wa), phoneList=ps.filter(p=>p.sin_wa&&p.phone&&p.phone!=='(oculto en Doctoralia)'), noContact=ps.filter(p=>(!p.phone||p.phone==='(oculto en Doctoralia)')&&!p.wa).length;
   batchUrls=waList.map(p=>{const raw=p.wa||p.phone||'';const num='52'+raw.replace(/\D/g,'');return{url:`https://wa.me/${num}?text=${encodeURIComponent(buildMsg(p))}`,name:p.name,grade:p.grade,id:p.id};});
   document.getElementById('batchStats').innerHTML=`<div class="batch-stat" style="color:#25D366">${waList.length} con WA / teléfono</div><div class="batch-stat" style="color:var(--yellow)">${phoneList.length} sin WA — llamar</div>${noContact?`<div class="batch-stat" style="color:var(--text-muted)">${noContact} sin contacto</div>`:''}`;
   document.getElementById('outTabWACount').textContent=`(${waList.length})`; document.getElementById('outTabPhoneCount').textContent=`(${phoneList.length})`;

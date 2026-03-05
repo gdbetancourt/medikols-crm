@@ -61,8 +61,14 @@ async function initDB() {
       grade TEXT,
       status TEXT,
       notes TEXT,
+      sin_wa BOOLEAN DEFAULT FALSE,
       created_at TIMESTAMPTZ DEFAULT NOW()
     )
+  `);
+
+  // Add sin_wa column if table already existed without it
+  await pool.query(`
+    ALTER TABLE prospects ADD COLUMN IF NOT EXISTS sin_wa BOOLEAN DEFAULT FALSE
   `);
 
   const { rows } = await pool.query('SELECT count(*)::int AS cnt FROM prospects');
@@ -95,10 +101,10 @@ app.post('/api/prospects', async (req, res) => {
     const p = req.body;
     const id = p.id || 'u' + Date.now();
     const { rows } = await pool.query(
-      `INSERT INTO prospects (id,name,specialty,city,phone,wa,ig,source,reviews,score,grade,status,notes)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+      `INSERT INTO prospects (id,name,specialty,city,phone,wa,ig,source,reviews,score,grade,status,notes,sin_wa)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
        RETURNING *`,
-      [id, p.name, p.specialty, p.city, p.phone, p.wa, p.ig, p.source, p.reviews||0, p.score||0, p.grade||'B', p.status||'Nuevo', p.notes||'']
+      [id, p.name, p.specialty, p.city, p.phone, p.wa, p.ig, p.source, p.reviews||0, p.score||0, p.grade||'B', p.status||'Nuevo', p.notes||'', p.sin_wa||false]
     );
     res.status(201).json(rows[0]);
   } catch (err) {
@@ -111,9 +117,9 @@ app.put('/api/prospects/:id', async (req, res) => {
   try {
     const p = req.body;
     const { rows } = await pool.query(
-      `UPDATE prospects SET name=$1,specialty=$2,city=$3,phone=$4,wa=$5,ig=$6,source=$7,reviews=$8,score=$9,grade=$10,status=$11,notes=$12
-       WHERE id=$13 RETURNING *`,
-      [p.name, p.specialty, p.city, p.phone, p.wa, p.ig, p.source, p.reviews, p.score, p.grade, p.status, p.notes, req.params.id]
+      `UPDATE prospects SET name=$1,specialty=$2,city=$3,phone=$4,wa=$5,ig=$6,source=$7,reviews=$8,score=$9,grade=$10,status=$11,notes=$12,sin_wa=$13
+       WHERE id=$14 RETURNING *`,
+      [p.name, p.specialty, p.city, p.phone, p.wa, p.ig, p.source, p.reviews, p.score, p.grade, p.status, p.notes, p.sin_wa||false, req.params.id]
     );
     if (!rows.length) return res.status(404).json({ error: 'Not found' });
     res.json(rows[0]);
