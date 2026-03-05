@@ -345,8 +345,8 @@
       <option value="AB" selected>Grado A + B</option>
     </select>
     <select id="batchStatusFilter" onchange="renderBatch()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:6px 12px;font-size:12px;font-family:'Sora',sans-serif;outline:none;cursor:pointer">
-      <option value="Nuevo" selected>Solo Nuevos</option>
-      <option value="">Todos los estados</option>
+      <option value="" selected>Todos los estados</option>
+      <option value="Nuevo">Solo Nuevos</option>
       <option value="Contactado">Solo Contactados</option>
     </select>
     <select id="batchStepFilter" onchange="renderBatch()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:6px 12px;font-size:12px;font-family:'Sora',sans-serif;outline:none;cursor:pointer">
@@ -880,12 +880,13 @@ function switchOutreachTab(tab) {
 }
 
 function renderBatch() {
+  console.log('Outreach render, prospects:', prospects.length, prospects);
   const gradeF=document.getElementById('batchGradeFilter').value, statusF=document.getElementById('batchStatusFilter').value, stepF=document.getElementById('batchStepFilter').value;
   let ps = prospects.filter(p => { const gradeOk=!gradeF||gradeF==='AB'?(gradeF===''||p.grade==='A'||p.grade==='B'):p.grade===gradeF; return gradeOk&&(!statusF||p.status===statusF); });
   function buildMsg(p) { if(stepF==='1') return getIceBreaker(p,'wa'); if(stepF==='2a') return getPitch(p,'wa','asistente'); return getPitch(p,'wa','medico'); }
-  const waList=ps.filter(p=>p.wa), phoneList=ps.filter(p=>!p.wa&&p.phone&&p.phone!=='(oculto en Doctoralia)'), noContact=ps.filter(p=>!p.wa&&(!p.phone||p.phone==='(oculto en Doctoralia)')).length;
-  batchUrls=waList.map(p=>{const num='52'+p.wa.replace(/\D/g,'');return{url:`https://wa.me/${num}?text=${encodeURIComponent(buildMsg(p))}`,name:p.name,grade:p.grade,id:p.id};});
-  document.getElementById('batchStats').innerHTML=`<div class="batch-stat" style="color:#25D366">${waList.length} con WA confirmado</div><div class="batch-stat" style="color:var(--yellow)">${phoneList.length} sin WA — llamar</div>${noContact?`<div class="batch-stat" style="color:var(--text-muted)">${noContact} sin contacto</div>`:''}`;
+  const waList=ps.filter(p=>p.wa||p.phone), phoneList=ps.filter(p=>!p.wa&&p.phone&&p.phone!=='(oculto en Doctoralia)'), noContact=ps.filter(p=>!p.wa&&(!p.phone||p.phone==='(oculto en Doctoralia)')).length;
+  batchUrls=waList.map(p=>{const raw=p.wa||p.phone||'';const num='52'+raw.replace(/\D/g,'');return{url:`https://wa.me/${num}?text=${encodeURIComponent(buildMsg(p))}`,name:p.name,grade:p.grade,id:p.id};});
+  document.getElementById('batchStats').innerHTML=`<div class="batch-stat" style="color:#25D366">${waList.length} con WA / teléfono</div><div class="batch-stat" style="color:var(--yellow)">${phoneList.length} sin WA — llamar</div>${noContact?`<div class="batch-stat" style="color:var(--text-muted)">${noContact} sin contacto</div>`:''}`;
   document.getElementById('outTabWACount').textContent=`(${waList.length})`; document.getElementById('outTabPhoneCount').textContent=`(${phoneList.length})`;
   const urlEl=document.getElementById('batchUrlList');
   urlEl.innerHTML=!batchUrls.length?'<span style="color:var(--text-muted);font-size:12px">Sin prospectos con WA para estos filtros.</span>':batchUrls.map((u,i)=>`<a href="${u.url}" target="_blank"><span style="color:var(--text-dim);margin-right:8px">${String(i+1).padStart(2,'0')}.</span><span style="color:var(--${u.grade==='A'?'green':'yellow'});margin-right:6px">[${u.grade}]</span><span style="color:var(--text-muted);margin-right:8px">${u.name.slice(0,28)}</span><span style="color:var(--blue);font-size:11px">${u.url}</span></a>`).join('');
