@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MediKOLs — CRM · 20 Prospectos Reales</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0F172A; --surface: #1E293B; --surface2: #273449; --border: rgba(255,255,255,0.08);
+    --green: #10B981; --green-dim: rgba(16,185,129,0.15);
+    --blue: #3B82F6; --blue-dim: rgba(59,130,246,0.15);
+    --yellow: #F59E0B; --yellow-dim: rgba(245,158,11,0.15);
+    --red: #EF4444; --red-dim: rgba(239,68,68,0.15);
+    --purple: #8B5CF6; --teal: #14B8A6;
+    --text: #F1F5F9; --text-muted: #94A3B8; --radius: 10px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Sora',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+  .topbar { background:var(--surface); border-bottom:1px solid var(--border); padding:14px 24px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; }
+  .logo { font-size:18px; font-weight:700; display:flex; align-items:center; gap:8px; }
+  .logo .dot { width:8px; height:8px; background:var(--green); border-radius:50%; animation:pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.6;transform:scale(1.4)} }
+  .logo-sub { font-size:12px; color:var(--text-muted); font-weight:400; margin-left:4px; }
+  .topbar-actions { display:flex; gap:10px; align-items:center; }
+  .btn { padding:8px 16px; border-radius:8px; font-size:13px; font-family:'Sora',sans-serif; cursor:pointer; border:none; font-weight:500; transition:all .15s; }
+  .btn-primary { background:var(--green); color:#fff; }
+  .btn-primary:hover { background:#059669; }
+  .btn-outline { background:transparent; border:1px solid var(--border); color:var(--text-muted); }
+  .btn-outline:hover { border-color:var(--green); color:var(--green); }
+
+  .alert-banner { background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); border-radius:10px; margin:16px 24px; padding:12px 18px; display:flex; align-items:center; gap:10px; font-size:13px; }
+  .alert-banner strong { color:var(--green); }
+
+  .stats-bar { display:flex; gap:12px; padding:0 24px 16px; overflow-x:auto; }
+  .stat-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:14px 20px; flex-shrink:0; min-width:110px; }
+  .stat-label { font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
+  .stat-value { font-size:24px; font-weight:700; }
+
+  .filters { padding:0 24px 16px; display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  .filter-input { background:var(--surface); border:1px solid var(--border); border-radius:8px; color:var(--text); padding:8px 14px; font-size:13px; font-family:'Sora',sans-serif; outline:none; min-width:220px; }
+  .filter-input:focus { border-color:var(--blue); }
+  .filter-select { background:var(--surface); border:1px solid var(--border); border-radius:8px; color:var(--text); padding:8px 14px; font-size:13px; font-family:'Sora',sans-serif; outline:none; cursor:pointer; appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394A3B8' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 10px center; padding-right:30px; }
+
+  .table-wrap { padding:0 24px 24px; overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  thead th { background:var(--surface); border-bottom:1px solid var(--border); padding:10px 12px; text-align:left; font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; font-weight:600; white-space:nowrap; }
+  tbody tr { border-bottom:1px solid var(--border); transition:background .1s; }
+  tbody tr:hover { background:var(--surface2); }
+  tbody td { padding:10px 12px; vertical-align:middle; }
+
+  .badge { display:inline-block; padding:3px 9px; border-radius:20px; font-size:11px; font-weight:600; }
+  .badge-nuevo { background:var(--blue-dim); color:var(--blue); }
+  .badge-contactado { background:var(--yellow-dim); color:var(--yellow); }
+  .badge-llamar { background:rgba(239,68,68,0.15); color:#F97316; }
+  .badge-demo { background:rgba(139,92,246,.2); color:var(--purple); }
+  .badge-propuesta { background:rgba(249,115,22,.2); color:#F97316; }
+  .badge-cliente { background:var(--green-dim); color:var(--green); }
+  .badge-descartado { background:var(--red-dim); color:var(--red); }
+
+  .grade-a { color:var(--green); font-weight:700; font-size:13px; }
+  .grade-b { color:var(--yellow); font-weight:700; font-size:13px; }
+  .grade-c { color:var(--text-muted); font-weight:700; font-size:13px; }
+
+  .name-cell { font-weight:600; }
+  .sub-cell { font-size:11px; color:var(--text-muted); margin-top:2px; }
+  .wa-link { color:#25D366; font-size:12px; text-decoration:none; display:block; }
+  .ig-link { color:#E1306C; font-size:12px; display:block; }
+  .tel-text { color:var(--text-muted); font-size:12px; font-family:monospace; }
+
+  .action-btn { background:transparent; border:1px solid var(--border); color:var(--text-muted); border-radius:6px; padding:4px 10px; font-size:11px; cursor:pointer; font-family:'Sora',sans-serif; transition:all .15s; margin-right:4px; }
+  .action-btn:hover { border-color:var(--green); color:var(--green); }
+  .action-btn.msg:hover { border-color:var(--blue); color:var(--blue); }
+  .action-btn.del:hover { border-color:var(--red); color:var(--red); }
+  .notes-cell { max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--text-muted); font-size:11px; }
+
+  /* MODAL */
+  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.75); backdrop-filter:blur(4px); z-index:200; align-items:center; justify-content:center; padding:20px; }
+  .modal-overlay.active { display:flex; }
+  .modal { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:28px; width:100%; max-width:540px; max-height:90vh; overflow-y:auto; animation:modalIn .2s ease-out; }
+  @keyframes modalIn { from{opacity:0;transform:scale(.95)} to{opacity:1;transform:scale(1)} }
+  .modal-title { font-size:18px; font-weight:700; margin-bottom:4px; }
+  .modal-meta { font-size:13px; color:var(--text-muted); margin-bottom:20px; }
+
+  .channel-tabs { display:flex; gap:8px; margin-bottom:16px; }
+  .channel-tab { padding:7px 16px; border-radius:20px; font-size:12px; font-weight:600; cursor:pointer; border:1px solid var(--border); color:var(--text-muted); font-family:'Sora',sans-serif; background:transparent; transition:all .15s; }
+  .channel-tab.active-wa { background:rgba(37,211,102,.15); border-color:#25D366; color:#25D366; }
+  .channel-tab.active-ig { background:rgba(225,48,108,.15); border-color:#E1306C; color:#E1306C; }
+  .channel-tab.active-tel { background:var(--blue-dim); border-color:var(--blue); color:var(--blue); }
+
+  .msg-box { background:#0B1425; border:1px solid var(--border); border-radius:10px; padding:18px; font-size:14px; line-height:1.7; white-space:pre-wrap; color:var(--text); position:relative; margin-bottom:16px; }
+  .msg-box.wa-style { border-left:3px solid #25D366; }
+  .msg-box.ig-style { border-left:3px solid #E1306C; }
+  .msg-box.tel-style { border-left:3px solid var(--blue); }
+  .copy-btn { position:absolute; top:10px; right:10px; background:var(--surface2); border:none; color:var(--text-muted); padding:4px 10px; border-radius:6px; font-size:11px; cursor:pointer; font-family:'Sora',sans-serif; transition:all .15s; }
+  .copy-btn:hover { color:var(--text); }
+  .copy-btn.copied { background:var(--green-dim); color:var(--green); }
+
+  .roi-box { background:var(--green-dim); border:1px solid rgba(16,185,129,0.3); border-radius:10px; padding:14px 16px; font-size:13px; line-height:1.6; margin-bottom:16px; }
+  .roi-title { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--green); margin-bottom:8px; }
+
+  /* Step toggle */
+  .step-toggle { display:flex; gap:0; margin-bottom:18px; border:1px solid var(--border); border-radius:10px; overflow:hidden; }
+  .step-tab { flex:1; padding:10px 12px; background:transparent; border:none; color:var(--text-muted); font-family:'Sora',sans-serif; font-size:12px; font-weight:600; cursor:pointer; transition:all .15s; display:flex; align-items:center; justify-content:center; gap:7px; }
+  .step-tab:first-child { border-right:1px solid var(--border); }
+  .step-tab.active-step1 { background:var(--surface2); color:var(--text); }
+  .step-tab.active-step2 { background:var(--blue-dim); color:var(--blue2, #60A5FA); }
+  .step-num { width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; background:var(--surface3, #1D2E4E); }
+  .step-tab.active-step1 .step-num { background:var(--text-muted); color:var(--bg); }
+  .step-tab.active-step2 .step-num { background:var(--blue); color:white; }
+  .step-hint { font-size:11px; color:var(--text-muted); margin-bottom:12px; padding:8px 12px; background:rgba(255,255,255,0.03); border-radius:8px; line-height:1.5; }
+  .step-hint strong { color:var(--text); }
+
+  .modal-footer { display:flex; justify-content:flex-end; gap:10px; margin-top:16px; }
+  .modal-btn { border:none; border-radius:8px; padding:10px 20px; font-size:13px; font-weight:600; font-family:'Sora',sans-serif; cursor:pointer; }
+  .modal-btn.secondary { background:var(--surface2); color:var(--text-muted); }
+  .modal-btn.wa-btn { background:#25D366; color:white; }
+  .modal-btn.ig-btn { background:#E1306C; color:white; }
+
+  .form-row { margin-bottom:14px; }
+  .form-label { font-size:12px; color:var(--text-muted); margin-bottom:6px; display:block; }
+  .form-input, .form-select, .form-textarea { width:100%; background:#0B1425; border:1px solid var(--border); border-radius:8px; color:var(--text); padding:9px 12px; font-size:13px; font-family:'Sora',sans-serif; outline:none; }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { border-color:var(--blue); }
+  .form-textarea { resize:vertical; min-height:80px; }
+  .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .edit-modal-footer { display:flex; justify-content:flex-end; gap:10px; margin-top:20px; }
+
+  /* Batch modal */
+  .batch-url-list { background:#0B1425; border:1px solid var(--border); border-radius:10px; padding:16px; font-family:monospace; font-size:12px; line-height:2; max-height:320px; overflow-y:auto; white-space:pre; color:var(--text-muted); margin-bottom:14px; word-break:break-all; }
+  .batch-url-list a { color:var(--blue); text-decoration:none; display:block; padding:2px 0; border-bottom:1px solid rgba(255,255,255,0.04); }
+  .batch-url-list a:hover { color:var(--blue2); }
+  .batch-stats { display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
+  .batch-stat { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:8px 14px; font-size:12px; font-weight:600; }
+  .batch-note { font-size:12px; color:var(--text-muted); line-height:1.6; margin-bottom:16px; padding:10px 14px; background:var(--yellow-dim); border:1px solid rgba(245,158,11,0.2); border-radius:8px; }
+  .copy-all-btn { background:var(--green); border:none; border-radius:8px; color:white; padding:10px 20px; font-size:13px; font-weight:600; font-family:'Sora',sans-serif; cursor:pointer; transition:all .15s; }
+  .copy-all-btn:hover { background:#059669; }
+  .copy-all-btn.copied { background:var(--surface2); color:var(--green); border:1px solid var(--green); }
+
+  /* Loading overlay */
+  .loading-overlay { position:fixed; inset:0; background:var(--bg); z-index:9999; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:16px; transition:opacity .3s; }
+  .loading-overlay.hidden { opacity:0; pointer-events:none; }
+  .loading-spinner { width:32px; height:32px; border:3px solid var(--border); border-top-color:var(--green); border-radius:50%; animation:spin .8s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<!-- Loading state -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner"></div>
+  <div style="color:var(--text-muted);font-size:13px">Cargando prospectos...</div>
+</div>
+
+<div class="topbar">
+  <div class="logo"><div class="dot"></div>MediKOLs <span class="logo-sub">CRM · Campaña #1</span></div>
+  <div class="topbar-actions">
+    <button class="btn btn-outline" onclick="exportCSV()">⬇ Exportar CSV</button>
+    <button class="btn btn-outline" style="border-color:#25D366;color:#25D366" onclick="openBatch()">⚡ Batch WhatsApp</button>
+    <button class="btn btn-primary" onclick="openEdit()">+ Agregar prospecto</button>
+  </div>
+</div>
+
+<!-- BATCH MODAL -->
+<div class="modal-overlay" id="batchModal" onclick="closeBatchOnOutside(event)">
+  <div class="modal" style="max-width:660px;max-height:85vh;overflow-y:auto">
+    <div class="modal-title">⚡ Batch WhatsApp — URLs para extensión de Chrome</div>
+    <div style="font-size:13px;color:var(--text-muted);margin-bottom:16px">
+      Prospectos con WA confirmado para la extensión de Chrome · Prospectos sin WA para llamar por teléfono.
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
+      <div style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:1px;align-self:center">Incluir:</div>
+      <select id="batchGradeFilter" onchange="renderBatch()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:6px 12px;font-size:12px;font-family:'Sora',sans-serif;outline:none;cursor:pointer">
+        <option value="">Todos los grados</option>
+        <option value="A">Solo Grado A</option>
+        <option value="AB" selected>Grado A + B</option>
+      </select>
+      <select id="batchStatusFilter" onchange="renderBatch()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:6px 12px;font-size:12px;font-family:'Sora',sans-serif;outline:none;cursor:pointer">
+        <option value="Nuevo" selected>Solo Nuevos</option>
+        <option value="">Todos los estados</option>
+        <option value="Contactado">Solo Contactados</option>
+      </select>
+      <select id="batchStepFilter" onchange="renderBatch()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:6px 12px;font-size:12px;font-family:'Sora',sans-serif;outline:none;cursor:pointer">
+        <option value="1" selected>Paso 1 — Ice breaker</option>
+        <option value="2a">Paso 2 — Pitch (asistente respondió)</option>
+        <option value="2m">Paso 2 — Pitch (médico respondió)</option>
+      </select>
+    </div>
+    <div class="batch-stats" id="batchStats"></div>
+    <div style="display:flex;border-bottom:1px solid var(--border);margin-bottom:16px">
+      <button id="tabWA" onclick="switchBatchTab('wa')" style="padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;border:none;border-bottom:2px solid #25D366;color:#25D366;background:none;font-family:'Sora',sans-serif">
+        💬 WhatsApp <span id="tabWACount" style="font-size:11px;margin-left:4px;opacity:.7"></span>
+      </button>
+      <button id="tabPhone" onclick="switchBatchTab('phone')" style="padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;border:none;border-bottom:2px solid transparent;color:var(--text-muted);background:none;font-family:'Sora',sans-serif">
+        📞 Llamar por teléfono <span id="tabPhoneCount" style="font-size:11px;margin-left:4px;opacity:.7"></span>
+      </button>
+    </div>
+    <div id="tabContentWA">
+      <div class="batch-note" style="margin-bottom:10px;font-size:12px">
+        Copia las URLs y pégalas en tu extensión de Chrome (Tab Opener, Open Multiple URLs) — abre cada chat con el mensaje ya escrito.
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
+        <button class="copy-all-btn" id="copyUrlsBtn" onclick="copyAllUrls()" style="padding:6px 16px;font-size:12px">Copiar todas las URLs</button>
+      </div>
+      <div class="batch-url-list" id="batchUrlList"></div>
+    </div>
+    <div id="tabContentPhone" style="display:none">
+      <div class="batch-note" style="margin-bottom:10px;font-size:12px;background:var(--yellow-dim);border-color:rgba(245,158,11,0.25)">
+        Guion de llamada: <strong>"Hola, llamo al consultorio de [nombre]. Me puede comunicar con quien lleva la agenda o con el doctor?"</strong>
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
+        <button class="copy-all-btn" id="copyPhonesBtn2" onclick="copyAllPhones()" style="padding:6px 16px;font-size:12px;background:var(--yellow)">Copiar lista de teléfonos</button>
+      </div>
+      <div class="batch-url-list" id="batchPhoneList"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+      <button class="modal-btn secondary" onclick="closeBatch()">Cerrar</button>
+      <button class="copy-all-btn" style="background:var(--blue)" onclick="markBatchContacted()">✓ Marcar todos como Contactados</button>
+    </div>
+  </div>
+</div>
+
+<div class="alert-banner" id="alertBanner">
+  ✅ <div><strong>Cargando prospectos...</strong></div>
+</div>
+
+<div class="stats-bar" id="statsBar"></div>
+
+<!-- MAIN TABS -->
+<div style="display:flex;border-bottom:2px solid var(--border);padding:0 24px;background:var(--surface);margin-bottom:0">
+  <button id="mainTabProspectos" onclick="switchMainTab('prospectos')"
+    style="padding:14px 24px;font-size:14px;font-weight:600;cursor:pointer;border:none;border-bottom:2px solid var(--green);color:var(--green);background:none;font-family:'Sora',sans-serif;margin-bottom:-2px;transition:all .15s">
+    📋 Prospectos WA &nbsp;<span id="mainTabProspectosCount" style="font-size:11px;opacity:.7"></span>
+  </button>
+  <button id="mainTabLlamar" onclick="switchMainTab('llamar')"
+    style="padding:14px 24px;font-size:14px;font-weight:600;cursor:pointer;border:none;border-bottom:2px solid transparent;color:var(--text-muted);background:none;font-family:'Sora',sans-serif;margin-bottom:-2px;transition:all .15s">
+    📞 Lista de llamadas &nbsp;<span id="mainTabLlamarCount" style="font-size:11px;opacity:.7"></span>
+  </button>
+</div>
+
+<!-- TAB: PROSPECTOS -->
+<div id="viewProspectos">
+<div class="filters">
+  <input class="filter-input" id="searchInput" placeholder="🔍  Buscar..." oninput="renderTable()">
+  <select class="filter-select" id="statusFilter" onchange="renderTable()">
+    <option value="">Todos los estados</option>
+    <option>Nuevo</option><option>Contactado</option><option>Llamar</option><option>Demo</option>
+    <option>Propuesta</option><option>Cliente</option><option>Descartado</option>
+  </select>
+  <select class="filter-select" id="specFilter" onchange="renderTable()">
+    <option value="">Todas las especialidades</option>
+    <option>Dermatología</option><option>Ginecología</option><option>Pediatría</option><option>Pediatría / Neonatología</option>
+  </select>
+  <select class="filter-select" id="gradeFilter" onchange="renderTable()">
+    <option value="">Todos los grados</option>
+    <option>A</option><option>B</option><option>C</option>
+  </select>
+</div>
+<div class="table-wrap">
+  <table>
+    <thead><tr>
+      <th>#</th><th>Médico / Consultorio</th><th>Especialidad</th><th>Ciudad</th>
+      <th>Contacto</th><th>Fuente</th><th>Reseñas</th><th>Score</th>
+      <th>Estado</th><th>Notas</th><th>Acciones</th>
+    </tr></thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+</div>
+</div>
+
+<!-- TAB: LLAMADAS -->
+<div id="viewLlamar" style="display:none">
+  <div style="padding:16px 24px 8px;display:flex;align-items:center;justify-content:space-between">
+    <div style="font-size:13px;color:var(--text-muted)">
+      Prospectos <strong style="color:var(--text)">sin WhatsApp confirmado</strong> — contactar por teléfono. Marca cada uno conforme vayas llamando.
+    </div>
+    <button class="copy-all-btn" id="copyPhonesBtn" onclick="copyAllPhones()" style="padding:7px 16px;font-size:12px;background:var(--yellow)">Copiar lista</button>
+  </div>
+  <div style="padding:0 24px">
+    <div style="background:var(--yellow-dim);border:1px solid rgba(245,158,11,0.25);border-radius:10px;padding:12px 16px;font-size:12px;color:var(--text-muted);margin-bottom:16px">
+      Guion: <strong style="color:var(--text)">"Hola, llamo al consultorio de [nombre]. Me puede comunicar con quien lleva la agenda o con el doctor?"</strong>
+    </div>
+    <div id="callList"></div>
+  </div>
+</div>
+
+<!-- MODAL MENSAJE -->
+<div class="modal-overlay" id="msgModal" onclick="closeMsgOnOutside(event)">
+  <div class="modal">
+    <div class="modal-title" id="msgModalTitle"></div>
+    <div class="modal-meta" id="msgModalMeta"></div>
+    <div class="channel-tabs" id="channelTabs"></div>
+    <div class="step-toggle">
+      <button class="step-tab active-step1" id="stepTab1" onclick="switchStep(1)">
+        <span class="step-num">1</span> Ice breaker · Primer mensaje
+      </button>
+      <button class="step-tab" id="stepTab2" onclick="switchStep(2)">
+        <span class="step-num">2</span> Pitch · Cuando respondan
+      </button>
+    </div>
+    <div id="stepHint"></div>
+    <div id="msgContent"></div>
+    <div id="whoSection" style="display:none; margin-bottom:14px;">
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:1px;">¿Quién respondió?</div>
+      <div style="display:flex;gap:8px;">
+        <button class="step-tab active-step2" id="whoAsistente" style="flex:1;font-size:12px" onclick="switchWho('asistente')">
+          👩‍💼 La asistente
+        </button>
+        <button class="step-tab" id="whoMedico" style="flex:1;font-size:12px" onclick="switchWho('medico')">
+          👨‍⚕️ El/la médico
+        </button>
+      </div>
+    </div>
+    <div class="roi-box" id="roiBox"></div>
+    <div class="modal-footer" id="msgFooter"></div>
+  </div>
+</div>
+
+<!-- MODAL EDITAR -->
+<div class="modal-overlay" id="editModal" onclick="closeEditOnOutside(event)">
+  <div class="modal">
+    <div class="modal-title" id="editModalTitle">Agregar prospecto</div>
+    <div style="margin-top:16px">
+      <div class="form-grid">
+        <div class="form-row"><label class="form-label">Nombre *</label><input class="form-input" id="fName"></div>
+        <div class="form-row"><label class="form-label">Especialidad</label>
+          <select class="form-select" id="fSpec">
+            <option>Dermatología</option><option>Ginecología</option><option>Pediatría</option><option>Otra</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="form-row"><label class="form-label">Ciudad</label>
+          <select class="form-select" id="fCity">
+            <option>CDMX - Polanco</option><option>CDMX - Narvarte</option><option>CDMX - Benito Juárez</option>
+            <option>Monterrey</option><option>Otra</option>
+          </select>
+        </div>
+        <div class="form-row"><label class="form-label">Fuente</label>
+          <select class="form-select" id="fSource"><option>Doctoralia</option><option>Google Maps</option><option>Instagram</option><option>Referido</option></select>
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="form-row"><label class="form-label">Teléfono</label><input class="form-input" id="fPhone"></div>
+        <div class="form-row"><label class="form-label">WhatsApp</label><input class="form-input" id="fWA"></div>
+      </div>
+      <div class="form-grid">
+        <div class="form-row"><label class="form-label">Instagram</label><input class="form-input" id="fIG"></div>
+        <div class="form-row"><label class="form-label">Estado</label>
+          <select class="form-select" id="fStatus"><option>Nuevo</option><option>Contactado</option><option>Demo</option><option>Propuesta</option><option>Cliente</option><option>Descartado</option></select>
+        </div>
+      </div>
+      <div class="form-row"><label class="form-label">Notas</label><textarea class="form-textarea" id="fNotes"></textarea></div>
+      <div class="edit-modal-footer">
+        <button class="modal-btn secondary" onclick="closeEdit()">Cancelar</button>
+        <button class="modal-btn" style="background:var(--green);color:white" onclick="saveEdit()">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+const STATUS_BADGE = {Nuevo:'badge-nuevo',Contactado:'badge-contactado',Llamar:'badge-llamar',Demo:'badge-demo',Propuesta:'badge-propuesta',Cliente:'badge-cliente',Descartado:'badge-descartado'};
+const STATUS_ORDER = ['Nuevo','Contactado','Llamar','Demo','Propuesta','Cliente','Descartado'];
+
+// ── API HELPERS ───────────────────────────────────────────────────────────────
+const API = '/api/prospects';
+
+async function apiFetch(url, opts) {
+  const res = await fetch(url, { headers: { 'Content-Type': 'application/json' }, ...opts });
+  if (!res.ok) throw new Error(`API error ${res.status}`);
+  return res.json();
+}
+
+async function apiGetAll() { return apiFetch(API); }
+async function apiCreate(p) { return apiFetch(API, { method: 'POST', body: JSON.stringify(p) }); }
+async function apiUpdate(id, p) { return apiFetch(`${API}/${id}`, { method: 'PUT', body: JSON.stringify(p) }); }
+async function apiDelete(id) { return apiFetch(`${API}/${id}`, { method: 'DELETE' }); }
+
+// ── 2-STEP MESSAGING ──────────────────────────────────────────────────────────
+function classifyName(name) {
+  if (name.startsWith('Dra.')) return { type: 'doctor', gender: 'f', short: name.split(' ').slice(0,3).join(' ') };
+  if (name.startsWith('Dr.'))  return { type: 'doctor', gender: 'm', short: name.split(' ').slice(0,3).join(' ') };
+  return { type: 'consultorio', gender: null, short: name };
+}
+
+const ICE_BREAKERS = {
+  wa: (name) => {
+    const c = classifyName(name);
+    if (c.type === 'consultorio') return `Hola, estoy escribiendo a ${c.short}?`;
+    if (c.gender === 'f') return `Hola, estoy escribiendo al consultorio de la ${c.short}?`;
+    return `Hola, estoy escribiendo al consultorio del ${c.short}?`;
+  },
+  ig: (name) => {
+    const c = classifyName(name);
+    if (c.type === 'consultorio') return `Hola, es este el perfil de ${c.short}?`;
+    if (c.gender === 'f') return `Hola, es este el perfil del consultorio de la ${c.short}?`;
+    return `Hola, es este el perfil del consultorio del ${c.short}?`;
+  },
+};
+
+const PITCHES = {
+  "Dermatología": {
+    wa_asistente: (name, city) =>
+`Hola, gracias por responder.
+
+Les escribo porque trabajo con consultorios de dermatología en ${city} automatizando la agenda y la atención por WhatsApp con IA. La idea es que el consultorio pueda atender mensajes de pacientes, agendar citas y mandar recordatorios de forma automática, sin carga extra para la asistente ni para el doctor.
+
+Creen que al Dr./Dra. ${name} le podría interesar ver cómo funciona? Son como 2 minutos.`,
+    wa_medico: (name, city) =>
+`Hola ${name}, gracias por responder.
+
+Trabajo con dermatólogos en ${city} ayudándoles a automatizar la agenda y la atención por WhatsApp con IA — agenda citas, manda recordatorios y responde preguntas frecuentes de pacientes sin que el doctor tenga que estar al pendiente del teléfono.
+
+Le interesaría ver cómo quedaría en su consultorio? Son 2 minutos.`,
+    ig_asistente: (name, city) =>
+`Hola, gracias por responder.
+
+Trabajo con consultorios de dermatología en ${city} automatizando la agenda y la atención por WhatsApp con IA. Ayuda a reducir no-shows y a liberar tiempo de la asistente.
+
+Creen que al Dr./Dra. ${name} le podría interesar verlo? Es una demo de 2 minutos, sin compromiso.`,
+  },
+  "Ginecología": {
+    wa_asistente: (name, city) =>
+`Hola, gracias por responder.
+
+Les escribo porque trabajo con consultorios de ginecología en ${city} automatizando la agenda y los recordatorios de citas por WhatsApp. El sistema confirma citas automáticamente, manda recordatorios antes de cada consulta y responde preguntas frecuentes de pacientes, sin carga extra para la asistente.
+
+Creen que la Dra. ${name} lo podría ver? Son 2 minutos y se lo mando directo.`,
+    wa_medico: (name, city) =>
+`Hola Dra. ${name}, gracias por responder.
+
+Trabajo con ginecólogas en ${city} automatizando confirmaciones y recordatorios de citas por WhatsApp — reduce no-shows bastante sin ningún trabajo extra de su parte.
+
+Le interesa ver cómo quedaría en su consultorio? Le mando una demo de 2 minutos.`,
+    ig_asistente: (name, city) =>
+`Hola, gracias por responder.
+
+Trabajo con consultorios de ginecología en ${city} con un sistema que automatiza confirmaciones y recordatorios de citas por WhatsApp.
+
+Creen que la Dra. ${name} podría estar interesada? Le mando la demo en 2 minutos.`,
+  },
+  "Pediatría": {
+    wa_asistente: (name, city) =>
+`Hola, gracias por responder.
+
+Les escribo porque trabajo con consultorios de pediatría en ${city} automatizando la atención por WhatsApp — responde preguntas de mamás a cualquier hora, agenda citas y manda recordatorios automáticamente, sin que el doctor o la asistente tengan que estar al pendiente.
+
+Creen que al Dr./Dra. ${name} le podría interesar verlo? Son 2 minutos.`,
+    wa_medico: (name, city) =>
+`Hola Dr./Dra. ${name}, gracias por responder.
+
+Trabajo con pediatras en ${city} automatizando la atención por WhatsApp — agenda citas, responde preguntas de mamás y manda recordatorios sin que usted tenga que estar disponible todo el tiempo.
+
+Le interesa ver cómo quedaría en su consultorio?`,
+    ig_asistente: (name, city) =>
+`Hola, gracias por responder.
+
+Trabajo con consultorios de pediatría en ${city} con un sistema que automatiza el WhatsApp — agenda citas, responde preguntas y manda recordatorios solos.
+
+Creen que el Dr./Dra. ${name} lo podría ver? Le mando una demo rápida.`,
+  },
+};
+
+function getIceBreaker(p, channel) {
+  return ICE_BREAKERS[channel]?.(p.name) || ICE_BREAKERS.wa(p.name);
+}
+
+function getPitch(p, channel, who) {
+  const spec = p.specialty.includes("Pediatría") ? "Pediatría" : p.specialty;
+  const city = p.city.split(" - ")[0];
+  const name = extractShortName(p.name);
+  const key = `${channel}_${who}`;
+  return (PITCHES[spec] || PITCHES["Dermatología"])[key]?.(name, city)
+      || (PITCHES[spec] || PITCHES["Dermatología"])[`wa_asistente`]?.(name, city);
+}
+
+function extractShortName(name) {
+  if (name.startsWith("Dr") || name.startsWith("Dra")) {
+    const parts = name.split(" ");
+    return parts.slice(0,2).join(" ");
+  }
+  return name.split(",")[0];
+}
+
+function extractFirstName(name) { return extractShortName(name); }
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let prospects = [];
+
+async function load() {
+  prospects = await apiGetAll();
+}
+
+// Helper: update a prospect locally and via API
+async function updateProspect(p) {
+  await apiUpdate(p.id, p);
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+function filtered() {
+  const s = document.getElementById('searchInput').value.toLowerCase();
+  const st = document.getElementById('statusFilter').value;
+  const sp = document.getElementById('specFilter').value;
+  const gr = document.getElementById('gradeFilter').value;
+  return prospects.filter(p => {
+    const match = !s || [p.name,p.specialty,p.city,p.phone,p.ig].join(' ').toLowerCase().includes(s);
+    return match && (!st||p.status===st) && (!sp||p.specialty===sp) && (!gr||p.grade===gr);
+  });
+}
+
+function renderStats() {
+  const ps = prospects;
+  const cnt = s => ps.filter(p=>p.status===s).length;
+  document.getElementById('statsBar').innerHTML = `
+    <div class="stat-card"><div class="stat-label">Total</div><div class="stat-value" style="color:var(--blue)">${ps.length}</div></div>
+    <div class="stat-card"><div class="stat-label">Grado A</div><div class="stat-value" style="color:var(--green)">${ps.filter(p=>p.grade==='A').length}</div></div>
+    <div class="stat-card"><div class="stat-label">Grado B</div><div class="stat-value" style="color:var(--yellow)">${ps.filter(p=>p.grade==='B').length}</div></div>
+    <div class="stat-card"><div class="stat-label">Con IG</div><div class="stat-value" style="color:#E1306C">${ps.filter(p=>p.ig&&!p.ig.includes('ver')).length}</div></div>
+    <div class="stat-card"><div class="stat-label">Con WA</div><div class="stat-value" style="color:#25D366">${ps.filter(p=>p.wa).length}</div></div>
+    <div class="stat-card"><div class="stat-label">Contactados</div><div class="stat-value" style="color:var(--yellow)">${cnt('Contactado')}</div></div>
+    <div class="stat-card"><div class="stat-label">Clientes ✓</div><div class="stat-value" style="color:var(--green)">${cnt('Cliente')}</div></div>
+  `;
+}
+
+function renderTable() {
+  const rows = filtered();
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = rows.map((p,i) => `
+    <tr>
+      <td style="color:var(--text-muted);font-size:12px">${i+1}</td>
+      <td>
+        <div class="name-cell">${p.name}</div>
+        <div class="sub-cell">Score: <span class="grade-${p.grade.toLowerCase()}">${p.score}pts · ${p.grade}</span></div>
+      </td>
+      <td style="font-size:12px">${p.specialty}</td>
+      <td style="font-size:12px">${p.city}</td>
+      <td>
+        ${p.wa ? `<a class="wa-link" href="https://wa.me/52${p.wa.replace(/\\D/g,'')}" target="_blank">📱 ${p.wa}</a>` : `<span class="tel-text">📞 ${p.phone}</span>`}
+        ${p.ig && !p.ig.includes('ver') && !p.ig.includes('confirm') ? `<span class="ig-link">📸 ${p.ig}</span>` : ''}
+      </td>
+      <td style="font-size:12px;color:var(--text-muted)">${p.source}</td>
+      <td style="font-size:12px;color:var(--text-muted);text-align:right">${p.reviews}</td>
+      <td style="text-align:center"><span class="grade-${p.grade.toLowerCase()}">${p.score}</span></td>
+      <td><span class="badge ${STATUS_BADGE[p.status]||'badge-nuevo'}">${p.status}</span></td>
+      <td><div class="notes-cell" title="${(p.notes||'').replace(/"/g,'&quot;')}">${p.notes||''}</div></td>
+      <td>
+        <button class="action-btn msg" onclick="showMsg('${p.id}')">✉ Msg</button>
+        <button class="action-btn" onclick="advance('${p.id}')" title="Avanzar estado">→</button>
+        <button class="action-btn" style="border-color:rgba(249,115,22,0.4);color:#F97316;font-size:10px" onclick="markLlamar('${p.id}')" title="WhatsApp no activo — mover a lista de llamadas">Sin WA</button>
+        <button class="action-btn" onclick="openEdit('${p.id}')">✏</button>
+      </td>
+    </tr>
+  `).join('');
+  renderStats();
+  // Update tab counts
+  const _noWA = prospects.filter(p => p.status === 'Llamar').length;
+  const _withWA = prospects.filter(p => p.wa).length;
+  document.getElementById('mainTabLlamarCount').textContent = `(${_noWA})`;
+  document.getElementById('mainTabProspectosCount').textContent = `(${_withWA + _noWA})`;
+}
+
+async function advance(id) {
+  const p = prospects.find(x=>x.id===id);
+  if (!p) return;
+  const i = STATUS_ORDER.indexOf(p.status);
+  if (i < STATUS_ORDER.length-2) {
+    p.status = STATUS_ORDER[i+1];
+    await updateProspect(p);
+    renderTable();
+  }
+}
+
+async function markLlamar(id) {
+  const p = prospects.find(x=>x.id===id);
+  if (!p) return;
+  p.status = 'Llamar';
+  await updateProspect(p);
+  renderTable();
+}
+
+// ── MENSAJE MODAL ─────────────────────────────────────────────────────────────
+let currentMsgId = null;
+let currentChannel = 'wa';
+let currentStep = 1;
+let currentWho = 'asistente';
+
+function showMsg(id) {
+  const p = prospects.find(x=>x.id===id);
+  if (!p) return;
+  currentMsgId = id;
+  currentStep = 1;
+  currentWho = 'asistente';
+  document.getElementById('msgModalTitle').textContent = p.name;
+  document.getElementById('msgModalMeta').textContent = `${p.specialty} · ${p.city} · Score ${p.score} (${p.grade})`;
+  const channels = [];
+  if (p.wa) channels.push({key:'wa', label:'💬 WhatsApp', cls:'active-wa'});
+  if (p.ig && !p.ig.includes('ver') && !p.ig.includes('confirm')) channels.push({key:'ig', label:'📸 Instagram DM', cls:'active-ig'});
+  currentChannel = channels[0]?.key || 'wa';
+  renderChannelTabs(channels);
+  renderStepTabs();
+  renderMsgContent(p);
+  renderROI(p);
+  renderMsgFooter(p);
+  document.getElementById('msgModal').classList.add('active');
+}
+
+function renderChannelTabs(channels) {
+  if (!channels.length) { document.getElementById('channelTabs').innerHTML=''; return; }
+  document.getElementById('channelTabs').innerHTML = channels.map(c =>
+    `<button class="channel-tab ${c.key===currentChannel ? c.cls : ''}" onclick="switchChannel('${c.key}')">${c.label}</button>`
+  ).join('');
+}
+
+function renderStepTabs() {
+  document.getElementById('stepTab1').className = `step-tab ${currentStep===1?'active-step1':''}`;
+  document.getElementById('stepTab2').className = `step-tab ${currentStep===2?'active-step2':''}`;
+  document.getElementById('whoSection').style.display = currentStep===2 ? 'block' : 'none';
+  if (currentStep===2) {
+    document.getElementById('whoAsistente').className = `step-tab ${currentWho==='asistente'?'active-step2':''}`;
+    document.getElementById('whoMedico').className = `step-tab ${currentWho==='medico'?'active-step2':''}`;
+  }
+}
+
+function switchStep(n) {
+  currentStep = n;
+  const p = prospects.find(x=>x.id===currentMsgId);
+  renderStepTabs();
+  renderMsgContent(p);
+  renderMsgFooter(p);
+}
+
+function switchWho(who) {
+  currentWho = who;
+  const p = prospects.find(x=>x.id===currentMsgId);
+  renderStepTabs();
+  renderMsgContent(p);
+  renderMsgFooter(p);
+}
+
+function switchChannel(ch) {
+  currentChannel = ch;
+  const p = prospects.find(x=>x.id===currentMsgId);
+  const channels = [];
+  if (p.wa) channels.push({key:'wa', label:'💬 WhatsApp', cls:'active-wa'});
+  if (p.ig && !p.ig.includes('ver') && !p.ig.includes('confirm')) channels.push({key:'ig', label:'📸 Instagram DM', cls:'active-ig'});
+  renderChannelTabs(channels);
+  renderMsgContent(p);
+  renderMsgFooter(p);
+}
+
+function renderMsgContent(p) {
+  const styleClass = currentChannel==='wa'?'wa-style':'ig-style';
+  let msg, hint;
+  if (currentStep===1) {
+    msg = getIceBreaker(p, currentChannel);
+    hint = `<div class="step-hint">✉️ Envía solo este mensaje. <strong>No menciones nada de venta.</strong> Espera a que respondan — normalmente en minutos si es la asistente, en horas si es el médico directo.</div>`;
+  } else {
+    msg = getPitch(p, currentChannel, currentWho);
+    if (currentWho==='asistente') {
+      hint = `<div class="step-hint">👩‍💼 Respondió la <strong>asistente</strong>. Tu objetivo es que ella le pase el mensaje al médico o que te dé un momento del doctor. No le vendas a ella — pídele que te conecte.</div>`;
+    } else {
+      hint = `<div class="step-hint">👨‍⚕️ Respondió el/la <strong>médico directamente</strong>. Ahora sí puedes hacer el pitch completo. Tono profesional, directo, sin rodeos.</div>`;
+    }
+  }
+  document.getElementById('stepHint').innerHTML = hint;
+  document.getElementById('msgContent').innerHTML = `
+    <div class="msg-box ${styleClass}" id="msgText" data-raw="${encodeURIComponent(msg)}">
+      ${msg.replace(/\n/g,'<br>')}
+      <button class="copy-btn" id="copyMsgBtn" onclick="copyMsgText()">Copiar</button>
+    </div>`;
+}
+
+function renderROI(p) {
+  const rev = p.reviews;
+  const noShowsSaved = Math.round(rev * 0.02);
+  const spec = p.specialty.includes("Pediatría") ? "Pediatría" : p.specialty;
+  const price = spec==="Dermatología" ? 1400 : spec==="Ginecología" ? 1300 : 800;
+  const monthly = noShowsSaved * 4 * price;
+  document.getElementById('roiBox').innerHTML = `
+    <div class="roi-title">📊 ROI para incluir en el pitch si preguntan el precio</div>
+    <div style="color:var(--text);font-size:13px">
+      Con ${rev} reseñas estimamos ~${noShowsSaved} no-shows/semana evitados.<br>
+      <strong style="color:var(--green)">Recuperación estimada: $${monthly.toLocaleString()} MXN/mes</strong> vs $5,400 MXN/mes de MediBot.<br>
+      Si preguntan el costo: <em>"¿Cuánto cobra por consulta? Con ese dato les calculo el ROI exacto."</em>
+    </div>`;
+}
+
+function renderMsgFooter(p) {
+  let btns = `<button class="modal-btn secondary" onclick="closeMsgModal()">Cerrar</button>`;
+  if (currentChannel==='wa' && p.wa) {
+    const num = p.wa.replace(/\D/g,'');
+    const raw = currentStep===1 ? getIceBreaker(p,'wa') : getPitch(p,'wa',currentWho);
+    btns += `<button class="modal-btn wa-btn" onclick="openWA('${num}','${encodeURIComponent(raw)}')">Abrir en WhatsApp ↗</button>`;
+  }
+  if (currentChannel==='ig' && p.ig && !p.ig.includes('ver') && !p.ig.includes('confirm')) {
+    btns += `<button class="modal-btn ig-btn" onclick="window.open('https://instagram.com/${p.ig.replace('@','')}','_blank')">Abrir perfil IG ↗</button>`;
+  }
+  document.getElementById('msgFooter').innerHTML = btns;
+}
+
+function copyMsgText() {
+  const raw = decodeURIComponent(document.getElementById('msgText').dataset.raw);
+  navigator.clipboard.writeText(raw).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = raw;
+    ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;pointer-events:none';
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    try { document.execCommand('copy'); } catch(e) {}
+    document.body.removeChild(ta);
+  });
+  const btn = document.getElementById('copyMsgBtn');
+  btn.textContent = '✓ Copiado'; btn.classList.add('copied');
+  setTimeout(()=>{btn.textContent='Copiar';btn.classList.remove('copied');},2000);
+}
+
+async function openWA(num, msgEnc) {
+  window.open(`https://wa.me/52${num}?text=${msgEnc}`, '_blank');
+  const p = prospects.find(x=>x.id===currentMsgId);
+  if (p && p.status==='Nuevo') {
+    p.status='Contactado';
+    await updateProspect(p);
+    renderTable();
+  }
+}
+
+function closeMsgModal() { document.getElementById('msgModal').classList.remove('active'); }
+function closeMsgOnOutside(e) { if(e.target===document.getElementById('msgModal')) closeMsgModal(); }
+
+// ── EDIT MODAL ────────────────────────────────────────────────────────────────
+let editingId = null;
+
+function openEdit(id=null) {
+  editingId = id;
+  document.getElementById('editModalTitle').textContent = id ? 'Editar prospecto' : 'Agregar prospecto';
+  if (id) {
+    const p = prospects.find(x=>x.id===id);
+    document.getElementById('fName').value = p.name;
+    document.getElementById('fSpec').value = p.specialty.includes("Pediatría") ? "Pediatría" : p.specialty;
+    document.getElementById('fPhone').value = p.phone;
+    document.getElementById('fWA').value = p.wa;
+    document.getElementById('fIG').value = p.ig;
+    document.getElementById('fStatus').value = p.status;
+    document.getElementById('fNotes').value = p.notes || '';
+  } else {
+    ['fName','fPhone','fWA','fIG','fNotes'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('fStatus').value='Nuevo';
+  }
+  document.getElementById('editModal').classList.add('active');
+}
+function closeEdit() { document.getElementById('editModal').classList.remove('active'); editingId=null; }
+function closeEditOnOutside(e) { if(e.target===document.getElementById('editModal')) closeEdit(); }
+
+async function saveEdit() {
+  const name = document.getElementById('fName').value.trim();
+  if (!name) { alert('El nombre es obligatorio'); return; }
+  if (editingId) {
+    const p = prospects.find(x=>x.id===editingId);
+    p.name=name; p.specialty=document.getElementById('fSpec').value;
+    p.phone=document.getElementById('fPhone').value;
+    p.wa=document.getElementById('fWA').value;
+    p.ig=document.getElementById('fIG').value;
+    p.status=document.getElementById('fStatus').value;
+    p.notes=document.getElementById('fNotes').value;
+    await updateProspect(p);
+  } else {
+    const newP = {
+      id:'u'+Date.now(), name, specialty:document.getElementById('fSpec').value,
+      city:document.getElementById('fCity').value, phone:document.getElementById('fPhone').value,
+      wa:document.getElementById('fWA').value, ig:document.getElementById('fIG').value,
+      source:document.getElementById('fSource').value, reviews:0, score:0, grade:'B',
+      status:document.getElementById('fStatus').value, notes:document.getElementById('fNotes').value
+    };
+    const created = await apiCreate(newP);
+    prospects.push(created);
+  }
+  closeEdit(); renderTable();
+}
+
+// ── EXPORT ────────────────────────────────────────────────────────────────────
+function exportCSV() {
+  const headers = ['Nombre','Especialidad','Ciudad','Teléfono','WhatsApp','Instagram','Fuente','Reseñas','Score','Grado','Estado','Notas'];
+  const rows = prospects.map(p=>[p.name,p.specialty,p.city,p.phone,p.wa,p.ig,p.source,p.reviews,p.score,p.grade,p.status,p.notes].map(v=>`"${String(v||'').replace(/"/g,'""')}"`));
+  const csv=[headers,...rows].map(r=>r.join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);
+  a.download=`MediKOLs_CRM_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+
+// ── BATCH ─────────────────────────────────────────────────────────────────────
+let batchUrls = [];
+let batchPhones = [];
+
+function switchBatchTab(tab) {
+  const isWA = tab === 'wa';
+  document.getElementById('tabContentWA').style.display = isWA ? 'block' : 'none';
+  document.getElementById('tabContentPhone').style.display = isWA ? 'none' : 'block';
+  document.getElementById('tabWA').style.borderBottomColor = isWA ? '#25D366' : 'transparent';
+  document.getElementById('tabWA').style.color = isWA ? '#25D366' : 'var(--text-muted)';
+  document.getElementById('tabPhone').style.borderBottomColor = !isWA ? 'var(--yellow)' : 'transparent';
+  document.getElementById('tabPhone').style.color = !isWA ? 'var(--yellow)' : 'var(--text-muted)';
+}
+
+function switchMainTab(tab) {
+  const isProspectos = tab === 'prospectos';
+  document.getElementById('viewProspectos').style.display = isProspectos ? 'block' : 'none';
+  document.getElementById('viewLlamar').style.display = isProspectos ? 'none' : 'block';
+  const tP = document.getElementById('mainTabProspectos');
+  const tL = document.getElementById('mainTabLlamar');
+  tP.style.borderBottomColor = isProspectos ? 'var(--green)' : 'transparent';
+  tP.style.color = isProspectos ? 'var(--green)' : 'var(--text-muted)';
+  tL.style.borderBottomColor = !isProspectos ? 'var(--yellow)' : 'transparent';
+  tL.style.color = !isProspectos ? 'var(--yellow)' : 'var(--text-muted)';
+  if (!isProspectos) renderCallList();
+}
+
+function renderCallList() {
+  const list = prospects.filter(p => p.status === 'Llamar');
+  const el = document.getElementById('callList');
+  const countEl = document.getElementById('mainTabLlamarCount');
+  if (countEl) countEl.textContent = `(${list.length})`;
+  if (!list.length) {
+    el.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:40px 0;text-align:center">Ningún prospecto marcado para llamar todavía.<br><span style="font-size:12px;opacity:.6">Usa el botón 📞 en la tabla para mover prospectos aquí.</span></div>';
+    return;
+  }
+  el.innerHTML = list.map((p, i) => `
+    <div style="display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--border)">
+      <span style="color:var(--text-dim);font-size:12px;min-width:24px">${i+1}</span>
+      <span class="badge ${p.grade==='A'?'badge-cliente':'badge-contactado'}" style="min-width:28px;text-align:center">${p.grade}</span>
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:600;color:var(--text)">${p.name}</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:2px">${p.specialty} · ${p.city}</div>
+      </div>
+      <a href="tel:${p.phone.replace(/\\D/g,'')}" style="font-size:15px;font-weight:700;color:var(--yellow);text-decoration:none;font-family:monospace;letter-spacing:1px">${p.phone}</a>
+      <div style="display:flex;gap:6px">
+        <button class="action-btn" style="border-color:rgba(16,185,129,.4);color:var(--green)" onclick="markStatus('${p.id}','Contactado')" title="Respondió — marcar como Contactado">✓ Contactado</button>
+        <button class="action-btn" style="border-color:rgba(239,68,68,.3);color:var(--red)" onclick="markStatus('${p.id}','Descartado')" title="No contesta — descartar">✕</button>
+      </div>
+    </div>
+  `).join('');
+  batchPhones = list.map(p => ({ name: p.name, phone: p.phone, grade: p.grade, specialty: p.specialty, city: p.city, id: p.id }));
+  const proCount = document.getElementById('mainTabProspectosCount');
+  if (proCount) proCount.textContent = `(${prospects.filter(p=>p.wa||(p.phone&&p.phone!=='(oculto en Doctoralia)')).length})`;
+}
+
+async function markStatus(id, status) {
+  const p = prospects.find(x => x.id === id);
+  if (!p) return;
+  p.status = status;
+  await updateProspect(p);
+  renderTable(); renderCallList();
+}
+
+function openBatch() {
+  document.getElementById('batchModal').classList.add('active');
+  renderBatch();
+}
+function closeBatch() { document.getElementById('batchModal').classList.remove('active'); }
+function closeBatchOnOutside(e) { if(e.target===document.getElementById('batchModal')) closeBatch(); }
+
+function renderBatch() {
+  const gradeF = document.getElementById('batchGradeFilter').value;
+  const statusF = document.getElementById('batchStatusFilter').value;
+  const stepF = document.getElementById('batchStepFilter').value;
+  let ps = prospects.filter(p => {
+    const gradeOk = !gradeF || gradeF==='AB' ? (gradeF===''||p.grade==='A'||p.grade==='B') : p.grade===gradeF;
+    const statusOk = !statusF || p.status===statusF;
+    return gradeOk && statusOk;
+  });
+  function buildMsg(p) {
+    if (stepF==='1') return getIceBreaker(p, 'wa');
+    if (stepF==='2a') return getPitch(p, 'wa', 'asistente');
+    return getPitch(p, 'wa', 'medico');
+  }
+  const waList = ps.filter(p => p.wa);
+  const phoneList = ps.filter(p => !p.wa && p.phone && p.phone!=='(oculto en Doctoralia)');
+  const noContact = ps.filter(p => !p.wa && (!p.phone || p.phone==='(oculto en Doctoralia)')).length;
+  batchUrls = waList.map(p => {
+    const num = '52' + p.wa.replace(/\D/g,'');
+    return { url: `https://wa.me/${num}?text=${encodeURIComponent(buildMsg(p))}`, name: p.name, grade: p.grade, id: p.id };
+  });
+  document.getElementById('batchStats').innerHTML = `
+    <div class="batch-stat" style="color:#25D366">${waList.length} con WA confirmado</div>
+    <div class="batch-stat" style="color:var(--yellow)">${phoneList.length} sin WA — llamar</div>
+    ${noContact ? `<div class="batch-stat" style="color:var(--text-muted)">${noContact} sin contacto — excluidos</div>` : ''}
+  `;
+  document.getElementById('tabWACount').textContent = `(${waList.length})`;
+  document.getElementById('tabPhoneCount').textContent = `(${phoneList.length})`;
+  const urlEl = document.getElementById('batchUrlList');
+  if (!batchUrls.length) {
+    urlEl.innerHTML = '<span style="color:var(--text-muted);font-size:12px">Sin prospectos con WA confirmado para estos filtros.</span>';
+  } else {
+    urlEl.innerHTML = batchUrls.map((u, i) =>
+      `<a href="${u.url}" target="_blank"><span style="color:var(--text-dim);margin-right:8px">${String(i+1).padStart(2,'0')}.</span><span style="color:var(--${u.grade==='A'?'green':'yellow'});margin-right:6px">[${u.grade}]</span><span style="color:var(--text-muted);margin-right:8px">${u.name.slice(0,28)}</span><span style="color:var(--blue);font-size:11px">${u.url}</span></a>`
+    ).join('');
+  }
+  batchPhones = phoneList.map(p => ({ name: p.name, phone: p.phone, grade: p.grade, specialty: p.specialty, city: p.city, id: p.id }));
+  const phoneEl = document.getElementById('batchPhoneList');
+  if (!batchPhones.length) {
+    phoneEl.innerHTML = '<span style="color:var(--text-muted);font-size:12px">Sin prospectos de solo teléfono para estos filtros.</span>';
+  } else {
+    phoneEl.innerHTML = batchPhones.map((p, i) =>
+      `<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04)">
+        <span style="color:var(--text-dim);font-size:11px;min-width:22px">${String(i+1).padStart(2,'0')}.</span>
+        <span style="color:var(--${p.grade==='A'?'green':'yellow'});font-size:11px;min-width:28px">[${p.grade}]</span>
+        <span style="color:var(--text);font-size:12px;flex:1">${p.name}</span>
+        <span style="color:var(--text-muted);font-size:11px;min-width:80px">${p.specialty.split('/')[0].trim()}</span>
+        <span style="color:var(--yellow);font-family:monospace;font-size:12px">${p.phone}</span>
+      </div>`
+    ).join('');
+  }
+}
+
+function copyAllUrls() {
+  const text = batchUrls.map(u => u.url).join('\n');
+  navigator.clipboard.writeText(text).catch(() => {});
+  const btn = document.getElementById('copyUrlsBtn');
+  btn.textContent = '✓ Copiadas — pégalas en la extensión';
+  btn.classList.add('copied');
+  setTimeout(() => { btn.textContent = '📋 Copiar todas las URLs'; btn.classList.remove('copied'); }, 3000);
+}
+
+function copyAllPhones() {
+  const text = batchPhones.map(p => `${p.name} — ${p.phone} — ${p.specialty} — ${p.city}`).join('\n');
+  navigator.clipboard.writeText(text).catch(() => {});
+  const btn = document.getElementById('copyPhonesBtn') || document.getElementById('copyPhonesBtn2');
+  if (btn) { btn.textContent = '✓ Copiados'; setTimeout(() => { btn.textContent = 'Copiar teléfonos'; }, 2500); }
+}
+
+async function markBatchContacted() {
+  const ids = [...batchUrls, ...batchPhones].map(u => u.id);
+  for (const id of ids) {
+    const p = prospects.find(x => x.id === id);
+    if (p && p.status === 'Nuevo') {
+      p.status = 'Contactado';
+      await updateProspect(p);
+    }
+  }
+  renderTable();
+  renderBatch();
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+(async function init() {
+  try {
+    await load();
+    renderTable();
+    renderStats();
+    // Update alert banner
+    document.getElementById('alertBanner').innerHTML = `✅ <div><strong>${prospects.length} prospectos cargados desde la base de datos</strong> — Doctoralia + Google Maps · CDMX + Monterrey · Derma / Gineco / Pediatría</div>`;
+  } catch (err) {
+    document.getElementById('alertBanner').innerHTML = `❌ <div><strong>Error al cargar prospectos:</strong> ${err.message}</div>`;
+    document.getElementById('alertBanner').style.background = 'rgba(239,68,68,0.1)';
+    document.getElementById('alertBanner').style.borderColor = 'rgba(239,68,68,0.3)';
+  } finally {
+    const overlay = document.getElementById('loadingOverlay');
+    overlay.classList.add('hidden');
+    setTimeout(() => overlay.remove(), 300);
+  }
+})();
+</script>
+</body>
+</html>
