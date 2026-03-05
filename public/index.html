@@ -913,30 +913,9 @@ async function markBatchContacted() {
 // ══════════════════════════════════════════════════════════════════════════════
 // TAB 3: RESPUESTAS (Bridge)
 // ══════════════════════════════════════════════════════════════════════════════
-const BRIDGE_PROSPECTS = [
-  {id:"p01",name:"Centro Dermatológico Tennyson",specialty:"Dermatología",city:"CDMX - Polanco",phone:"55 5203 6454",wa:"55 2543 3927",ig:"@dermatologicotennyson"},
-  {id:"p02",name:"Dra. Carolina Hernandez Zepeda",specialty:"Dermatología",city:"CDMX - Benito Juárez",phone:"55 8869 4737",ig:"@dracarohz.derma"},
-  {id:"p03",name:"Dr. Juan Oswaldo Colmenero Mercado",specialty:"Dermatología",city:"CDMX - Polanco",phone:"55 4163 0177",ig:"@droswaldo.derma"},
-  {id:"p04",name:"Dr. Rubén David Bravo Fernández",specialty:"Pediatría",city:"Monterrey - Apodaca",phone:"81 2763 0558",ig:"@dr_rubenbravo_pedia"},
-  {id:"p05",name:"Dr. Ignacio Reyes Urrutia",specialty:"Ginecología",city:"CDMX - Benito Juárez",phone:"55 5682 0840",ig:"@dr.ignacioreyesurrutia"},
-  {id:"p06",name:"Dra. Claudia Cázares",specialty:"Dermatología",city:"CDMX - Col del Valle",phone:"55 4178 2100",ig:"@claudia.cazares"},
-  {id:"p07",name:"Dra. Annette Valerie Gaspard",specialty:"Ginecología",city:"CDMX",phone:"(oculto)",ig:"@draannettegaspard"},
-  {id:"p08",name:"Dra. Pamela Denis Lozano Montes",specialty:"Pediatría",city:"Monterrey - Miravalle",phone:"81 2466 1949",ig:"@pediatraenmonterrey"},
-  {id:"p09",name:"Dra. Mariana Sarao Pineda",specialty:"Dermatología",city:"CDMX - Polanco",phone:"55 9302 0288"},
-  {id:"p10",name:"Dra. Natalia Cerda Corona",specialty:"Ginecología",city:"CDMX - Álvaro Obregón",phone:"55 1059 7381"},
-  {id:"p11",name:"PielClinic Polanco",specialty:"Dermatología",city:"CDMX - Polanco",phone:"55 9000 4625"},
-  {id:"p12",name:"GINESTETICS - Dra. Tere Guerrero",specialty:"Ginecología",city:"CDMX - Narvarte",phone:"55 8368 3504"},
-  {id:"p13",name:"Dr. Alfonso Mazatán Dávila",specialty:"Pediatría",city:"Monterrey",phone:"81 1050 7604"},
-  {id:"p14",name:"Dra. Valeria Ventura Quintana",specialty:"Ginecología",city:"CDMX - Narvarte",phone:"55 3452 4613"},
-  {id:"p15",name:"GinecoB Vida",specialty:"Ginecología",city:"CDMX - Narvarte",phone:"55 8010 0066"},
-  {id:"p16",name:"Dra. Aimeé Yazmín Ruiz Flores",specialty:"Pediatría",city:"Monterrey - Centro",phone:"81 4762 7891"},
-  {id:"p17",name:"Dr. Edwin Mendoza Ramirez",specialty:"Ginecología",city:"CDMX - Miguel Hidalgo",phone:"55 9662 3761"},
-  {id:"p18",name:"Dra. Paola García Ruiz",specialty:"Ginecología",city:"CDMX - Narvarte",phone:"55 7563 3553"},
-  {id:"p19",name:"Dermará",specialty:"Dermatología",city:"CDMX - Polanco",phone:"55 4140 2492"},
-  {id:"p20",name:"Dra. Rossana Janina Llergo Valdez",specialty:"Dermatología",city:"CDMX - Polanco",phone:"55 2961 3111"}
-];
-
-const BRIDGE_SYSTEM = `Eres el asistente de ventas de MediKOLs, empresa que automatiza WhatsApp con IA para médicos especialistas en México.
+function buildBridgeSystem() {
+  const prospectList = prospects.map(p => ({id:p.id,name:p.name,specialty:p.specialty,city:p.city,phone:p.phone,wa:p.wa||'',ig:p.ig||''}));
+  return `Eres el asistente de ventas de MediKOLs, empresa que automatiza WhatsApp con IA para médicos especialistas en México.
 
 Recibirás screenshots de conversaciones de WhatsApp o Instagram. Tu tarea:
 1. Leer la imagen y extraer: número de teléfono visible, nombre del contacto, usuario de Instagram, y contenido de los mensajes
@@ -945,7 +924,7 @@ Recibirás screenshots de conversaciones de WhatsApp o Instagram. Tu tarea:
 4. Generar nota concisa y respuesta natural
 
 Lista de prospectos:
-${JSON.stringify(BRIDGE_PROSPECTS)}
+${JSON.stringify(prospectList)}
 
 Identificación por prioridad:
 - Número de teléfono (quita el +52 para comparar: +52 55 2543 3927 = 55 2543 3927)
@@ -968,6 +947,7 @@ Responde SOLO JSON válido sin markdown:
 }
 
 Si no puedes identificar: {"prospect_id": null, "error": "descripción del problema"}`;
+}
 
 let imgB64 = null, imgType = null, bridgeHistory = [];
 
@@ -1013,7 +993,7 @@ async function analyzeBridge() {
   document.getElementById('stepLabel').textContent='Leyendo imagen con IA...';
   try {
     const res = await fetch(CLAUDE_API, { method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:800, system:BRIDGE_SYSTEM,
+      body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:800, system:buildBridgeSystem(),
         messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:imgType,data:imgB64}},{type:'text',text:'Analiza este screenshot y responde con el JSON.'}]}] }) });
     const data=await res.json();
     const raw=data.content[0].text.trim().replace(/```json|```/g,'').trim();
