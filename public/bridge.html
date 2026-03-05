@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MediKOLs — AI Bridge</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink:#0D0D0D; --paper:#F5F2EC; --paper2:#EDE9E0;
+    --green:#1A6B3C; --green-light:#E8F5EE;
+    --amber:#B85C00; --amber-light:#FEF3E2;
+    --red:#9B1C1C; --red-light:#FEF2F2;
+    --muted:#6B6560; --border:rgba(13,13,13,0.12);
+    --mono:'DM Mono',monospace; --serif:'Instrument Serif',serif; --sans:'DM Sans',sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:var(--sans);background:var(--paper);color:var(--ink);min-height:100vh;padding:40px 20px;
+    background-image:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%230d0d0d' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/svg%3E");}
+  .wrap{max-width:640px;margin:0 auto;}
+  header{margin-bottom:32px;}
+  .brand{display:flex;align-items:baseline;gap:10px;margin-bottom:6px;}
+  .brand-name{font-family:var(--serif);font-size:26px;font-style:italic;}
+  .brand-tag{font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--paper2);border:1px solid var(--border);padding:2px 8px;border-radius:4px;}
+  .brand-desc{font-size:13px;color:var(--muted);line-height:1.5;}
+  .card{background:white;border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.05);}
+  .card-header{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;background:var(--paper);}
+  .card-header-icon{font-size:15px;}
+  .card-header-title{font-size:13px;font-weight:600;}
+  .card-header-sub{font-size:11px;color:var(--muted);margin-left:auto;font-family:var(--mono);}
+  .card-body{padding:20px;}
+
+  /* DROP ZONE */
+  .drop-zone{width:100%;min-height:180px;border:2px dashed var(--border);border-radius:10px;background:var(--paper);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+    cursor:pointer;transition:all .2s;position:relative;overflow:hidden;}
+  .drop-zone:hover{border-color:var(--ink);background:var(--paper2);}
+  .drop-zone.drag-over{border-color:var(--green);background:var(--green-light);}
+  .drop-zone.has-image{border-style:solid;border-color:rgba(26,107,60,0.4);min-height:auto;}
+  .drop-zone.has-image .placeholder{display:none;}
+  .placeholder{display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none;padding:20px;}
+  .drop-icon{font-size:32px;}
+  .drop-title{font-size:14px;font-weight:600;}
+  .drop-sub{font-size:12px;color:var(--muted);text-align:center;line-height:1.5;}
+  .drop-hint{font-size:11px;color:var(--muted);font-family:var(--mono);margin-top:4px;}
+  .file-input{position:absolute;inset:0;opacity:0;cursor:pointer;}
+  .preview-img{width:100%;max-height:300px;object-fit:contain;display:none;border-radius:8px;}
+  .clear-btn{position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.65);border:none;color:white;
+    border-radius:50%;width:28px;height:28px;font-size:14px;cursor:pointer;display:none;
+    align-items:center;justify-content:center;z-index:10;}
+  .drop-zone.has-image .clear-btn{display:flex;}
+
+  /* BTN */
+  .btn-row{display:flex;gap:8px;margin-top:14px;}
+  .btn{flex:1;padding:12px 16px;border-radius:8px;border:none;font-family:var(--sans);font-size:13px;font-weight:600;
+    cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:7px;}
+  .btn-primary{background:var(--ink);color:white;}
+  .btn-primary:hover{background:#2d2d2d;}
+  .btn-primary:disabled{background:#D4CFC9;color:#A09A94;cursor:not-allowed;}
+  .btn-sm{flex:0 0 auto;background:var(--paper2);color:var(--ink);border:1px solid var(--border);}
+  .btn-sm:hover{background:var(--paper);}
+  .spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite;display:none;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  /* RESULT */
+  .result-box{display:none;margin-top:16px;border:1.5px solid var(--border);border-radius:10px;overflow:hidden;}
+  .result-box.show{display:block;animation:fadeUp .25s ease-out;}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .result-header{background:var(--paper2);padding:10px 14px;font-size:11px;font-family:var(--mono);color:var(--muted);border-bottom:1px solid var(--border);}
+  .result-body{padding:14px 16px;}
+  .prospect-row{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
+  .prospect-name{font-weight:600;font-size:15px;}
+  .prospect-id{font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--paper2);padding:2px 7px;border-radius:4px;}
+  .field-row{display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;font-size:13px;}
+  .field-key{color:var(--muted);font-size:12px;min-width:65px;padding-top:2px;}
+  .badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;font-family:var(--mono);}
+  .badge-contactado{background:var(--amber-light);color:var(--amber);}
+  .badge-demo{background:#EDE9FE;color:#5B21B6;}
+  .badge-propuesta{background:#FEF3C7;color:#92400E;}
+  .badge-cliente{background:var(--green-light);color:var(--green);}
+  .badge-llamar{background:var(--amber-light);color:var(--amber);}
+  .badge-descartado{background:var(--red-light);color:var(--red);}
+  .badge-nuevo{background:#EFF6FF;color:#1D4ED8;}
+  .note-preview{background:var(--paper);border:1px solid var(--border);border-radius:6px;padding:9px 12px;font-size:12.5px;line-height:1.5;flex:1;}
+
+  /* REPLY */
+  .reply-box{display:none;margin-top:14px;border:1.5px solid #25D366;border-radius:10px;overflow:hidden;}
+  .reply-box.show{display:block;animation:fadeUp .25s ease-out;}
+  .reply-header{background:#F0FDF4;padding:10px 14px;font-size:11px;font-family:var(--mono);color:var(--green);border-bottom:1px solid rgba(37,211,102,0.2);display:flex;justify-content:space-between;align-items:center;}
+  .reply-text{padding:14px 16px;font-size:13.5px;line-height:1.7;white-space:pre-wrap;}
+  .copy-btn{background:none;border:1px solid rgba(37,211,102,0.5);border-radius:5px;color:var(--green);font-size:11px;font-family:var(--mono);padding:3px 9px;cursor:pointer;transition:all .15s;}
+  .copy-btn:hover{background:var(--green);color:white;}
+  .copy-btn.done{background:var(--green);color:white;}
+
+  /* STATUS */
+  .status-bar{display:none;padding:11px 14px;border-radius:8px;font-size:13px;margin-top:12px;align-items:center;gap:8px;}
+  .status-bar.show{display:flex;}
+  .status-bar.success{background:var(--green-light);color:var(--green);border:1px solid rgba(26,107,60,0.2);}
+  .status-bar.error{background:var(--red-light);color:var(--red);border:1px solid rgba(155,28,28,0.2);}
+  .status-bar.loading{background:var(--amber-light);color:var(--amber);border:1px solid rgba(184,92,0,0.2);}
+
+  /* HISTORY */
+  .history-item{padding:12px 20px;border-bottom:1px solid var(--border);display:flex;gap:12px;}
+  .history-item:last-child{border-bottom:none;}
+  .history-time{font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap;padding-top:2px;}
+  .history-main{flex:1;}
+  .history-name{font-size:13px;font-weight:600;margin-bottom:3px;}
+  .history-note{font-size:12px;color:var(--muted);line-height:1.4;}
+  .empty-state{text-align:center;padding:32px;color:var(--muted);font-size:13px;}
+  .empty-icon{font-size:28px;margin-bottom:8px;}
+
+  .steps{display:flex;gap:4px;margin-bottom:18px;}
+  .step{height:3px;flex:1;background:var(--border);border-radius:2px;transition:background .3s;}
+  .step.done{background:var(--green);}
+  .step.active{background:var(--amber);}
+  .api-note{font-family:var(--mono);font-size:10px;color:var(--muted);background:var(--paper2);border:1px solid var(--border);border-radius:6px;padding:7px 12px;margin-bottom:14px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <span class="brand-name">MediKOLs</span>
+      <span class="brand-tag">AI Bridge — Vision</span>
+    </div>
+    <div class="brand-desc">Pega el screenshot con Ctrl+V o súbelo → la IA lo lee, identifica el prospecto, actualiza Railway y te da la respuesta.</div>
+  </header>
+
+  <div class="steps">
+    <div class="step active" id="step1"></div>
+    <div class="step" id="step2"></div>
+    <div class="step" id="step3"></div>
+  </div>
+
+  <div class="api-note">Railway → https://medikols-crm-production.up.railway.app/api/prospects</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-header-icon">📸</span>
+      <span class="card-header-title">Screenshot de la conversación</span>
+      <span class="card-header-sub" id="stepLabel">Pega con Ctrl+V o sube el archivo</span>
+    </div>
+    <div class="card-body">
+
+      <div class="drop-zone" id="dropZone"
+        ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+        <input type="file" class="file-input" id="fileInput" accept="image/*" onchange="onFileChange(event)">
+        <div class="placeholder">
+          <div class="drop-icon">📲</div>
+          <div class="drop-title">Pega con Ctrl+V o arrastra aquí</div>
+          <div class="drop-sub">Screenshot de WhatsApp · Instagram · cualquier chat<br>PNG, JPG, WEBP</div>
+          <div class="drop-hint">O haz click para seleccionar archivo</div>
+        </div>
+        <img class="preview-img" id="previewImg">
+        <button class="clear-btn" onclick="clearImg(event)">✕</button>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="analyzeBtn" onclick="analyze()" disabled>
+          <div class="spinner" id="spinner"></div>
+          <span id="btnText">Selecciona una imagen primero</span>
+        </button>
+        <button class="btn btn-sm" onclick="clearAll()">Limpiar</button>
+      </div>
+
+      <div class="result-box" id="resultBox">
+        <div class="result-header">🔍 Prospecto identificado — CRM actualizado en Railway</div>
+        <div class="result-body">
+          <div class="prospect-row">
+            <span class="prospect-name" id="resName"></span>
+            <span class="prospect-id" id="resId"></span>
+          </div>
+          <div class="field-row">
+            <span class="field-key">Estado</span>
+            <span class="badge" id="resBadge"></span>
+          </div>
+          <div class="field-row" style="align-items:flex-start">
+            <span class="field-key">Nota</span>
+            <div class="note-preview" id="resNote"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="reply-box" id="replyBox">
+        <div class="reply-header">
+          <span>💬 Respuesta para enviar</span>
+          <button class="copy-btn" id="copyBtn" onclick="copyReply()">Copiar</button>
+        </div>
+        <div class="reply-text" id="replyText"></div>
+      </div>
+
+      <div class="status-bar" id="statusBar"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-header-icon">📜</span>
+      <span class="card-header-title">Historial de la sesión</span>
+      <span class="card-header-sub" id="histCount">0 registros</span>
+    </div>
+    <div id="histList">
+      <div class="empty-state"><div class="empty-icon">📭</div>Sin actualizaciones todavía</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const RAILWAY = 'https://medikols-crm-production.up.railway.app/api/prospects';
+const CLAUDE_API = 'https://api.anthropic.com/v1/messages';
+
+const PROSPECTS = [
+  {id:"p01",name:"Centro Dermatológico Tennyson",specialty:"Dermatología",city:"CDMX - Polanco",phone:"55 5203 6454",wa:"55 2543 3927",ig:"@dermatologicotennyson"},
+  {id:"p02",name:"Dra. Carolina Hernandez Zepeda",specialty:"Dermatología",city:"CDMX - Benito Juárez",phone:"55 8869 4737",ig:"@dracarohz.derma"},
+  {id:"p03",name:"Dr. Juan Oswaldo Colmenero Mercado",specialty:"Dermatología",city:"CDMX - Polanco",phone:"55 4163 0177",ig:"@droswaldo.derma"},
+  {id:"p04",name:"Dr. Rubén David Bravo Fernández",specialty:"Pediatría",city:"Monterrey - Apodaca",phone:"81 2763 0558",ig:"@dr_rubenbravo_pedia"},
+  {id:"p05",name:"Dr. Ignacio Reyes Urrutia",specialty:"Ginecología",city:"CDMX - Benito Juárez",phone:"55 5682 0840",ig:"@dr.ignacioreyesurrutia"},
+  {id:"p06",name:"Dra. Claudia Cázares",specialty:"Dermatología",city:"CDMX - Col del Valle",phone:"55 4178 2100",ig:"@claudia.cazares"},
+  {id:"p07",name:"Dra. Annette Valerie Gaspard",specialty:"Ginecología",city:"CDMX",phone:"(oculto)",ig:"@draannettegaspard"},
+  {id:"p08",name:"Dra. Pamela Denis Lozano Montes",specialty:"Pediatría",city:"Monterrey - Miravalle",phone:"81 2466 1949",ig:"@pediatraenmonterrey"},
+  {id:"p09",name:"Dra. Mariana Sarao Pineda",specialty:"Dermatología",city:"CDMX - Polanco",phone:"55 9302 0288"},
+  {id:"p10",name:"Dra. Natalia Cerda Corona",specialty:"Ginecología",city:"CDMX - Álvaro Obregón",phone:"55 1059 7381"},
+  {id:"p11",name:"PielClinic Polanco",specialty:"Dermatología",city:"CDMX - Polanco",phone:"55 9000 4625"},
+  {id:"p12",name:"GINESTETICS - Dra. Tere Guerrero",specialty:"Ginecología",city:"CDMX - Narvarte",phone:"55 8368 3504"},
+  {id:"p13",name:"Dr. Alfonso Mazatán Dávila",specialty:"Pediatría",city:"Monterrey",phone:"81 1050 7604"},
+  {id:"p14",name:"Dra. Valeria Ventura Quintana",specialty:"Ginecología",city:"CDMX - Narvarte",phone:"55 3452 4613"},
+  {id:"p15",name:"GinecoB Vida",specialty:"Ginecología",city:"CDMX - Narvarte",phone:"55 8010 0066"},
+  {id:"p16",name:"Dra. Aimeé Yazmín Ruiz Flores",specialty:"Pediatría",city:"Monterrey - Centro",phone:"81 4762 7891"},
+  {id:"p17",name:"Dr. Edwin Mendoza Ramirez",specialty:"Ginecología",city:"CDMX - Miguel Hidalgo",phone:"55 9662 3761"},
+  {id:"p18",name:"Dra. Paola García Ruiz",specialty:"Ginecología",city:"CDMX - Narvarte",phone:"55 7563 3553"},
+  {id:"p19",name:"Dermará",specialty:"Dermatología",city:"CDMX - Polanco",phone:"55 4140 2492"},
+  {id:"p20",name:"Dra. Rossana Janina Llergo Valdez",specialty:"Dermatología",city:"CDMX - Polanco",phone:"55 2961 3111"}
+];
+
+const SYSTEM = `Eres el asistente de ventas de MediKOLs, empresa que automatiza WhatsApp con IA para médicos especialistas en México.
+
+Recibirás screenshots de conversaciones de WhatsApp o Instagram. Tu tarea:
+1. Leer la imagen y extraer: número de teléfono visible, nombre del contacto, usuario de Instagram, y contenido de los mensajes
+2. Identificar a qué prospecto corresponde comparando con la lista
+3. Determinar el estado según la conversación
+4. Generar nota concisa y respuesta natural
+
+Lista de prospectos:
+${JSON.stringify(PROSPECTS)}
+
+Identificación por prioridad:
+- Número de teléfono (quita el +52 para comparar: +52 55 2543 3927 = 55 2543 3927)
+- Nombre del contacto en el header de WhatsApp
+- Usuario de Instagram
+
+Estados:
+- Respondieron = Contactado
+- Preguntan cómo funciona / quieren demo = Demo
+- Preguntan precio = Propuesta
+- Dijeron que no = Descartado
+
+Responde SOLO JSON válido sin markdown:
+{
+  "prospect_id": "p01",
+  "prospect_name": "Nombre completo del prospecto",
+  "status": "Contactado",
+  "note": "Resumen de lo que pasó, máx 100 caracteres",
+  "reply": "Respuesta exacta para enviar. Casual, sin emojis, español mexicano, máx 3 líneas."
+}
+
+Si no puedes identificar: {"prospect_id": null, "error": "descripción del problema"}`;
+
+let imgB64 = null;
+let imgType = null;
+let history = [];
+
+// CTRL+V paste anywhere on page
+document.addEventListener('paste', e => {
+  const items = e.clipboardData?.items || [];
+  for (const item of items) {
+    if (item.type.startsWith('image/')) {
+      loadFile(item.getAsFile());
+      break;
+    }
+  }
+});
+
+function onDragOver(e) { e.preventDefault(); document.getElementById('dropZone').classList.add('drag-over'); }
+function onDragLeave(e) { document.getElementById('dropZone').classList.remove('drag-over'); }
+function onDrop(e) {
+  e.preventDefault();
+  document.getElementById('dropZone').classList.remove('drag-over');
+  const f = e.dataTransfer.files[0];
+  if (f?.type.startsWith('image/')) loadFile(f);
+}
+function onFileChange(e) { const f = e.target.files[0]; if (f) loadFile(f); }
+
+function loadFile(file) {
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const [, b64] = ev.target.result.split(',');
+    imgB64 = b64;
+    imgType = file.type || 'image/png';
+
+    const img = document.getElementById('previewImg');
+    img.src = ev.target.result;
+    img.style.display = 'block';
+
+    document.getElementById('dropZone').classList.add('has-image');
+    document.getElementById('analyzeBtn').disabled = false;
+    document.getElementById('btnText').textContent = 'Analizar y actualizar CRM';
+    document.getElementById('stepLabel').textContent = 'Imagen lista — haz click en analizar';
+    setStep(1);
+    clearResults();
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearImg(e) {
+  if (e) e.stopPropagation();
+  imgB64 = null; imgType = null;
+  const img = document.getElementById('previewImg');
+  img.src = ''; img.style.display = 'none';
+  document.getElementById('dropZone').classList.remove('has-image');
+  document.getElementById('fileInput').value = '';
+  document.getElementById('analyzeBtn').disabled = true;
+  document.getElementById('btnText').textContent = 'Selecciona una imagen primero';
+  document.getElementById('stepLabel').textContent = 'Pega con Ctrl+V o sube el archivo';
+}
+
+function clearResults() {
+  document.getElementById('resultBox').classList.remove('show');
+  document.getElementById('replyBox').classList.remove('show');
+  document.getElementById('statusBar').className = 'status-bar';
+}
+
+async function analyze() {
+  if (!imgB64) return;
+  setBusy(true);
+  clearResults();
+  setStep(2);
+  document.getElementById('stepLabel').textContent = 'Leyendo imagen con IA...';
+
+  try {
+    const res = await fetch(CLAUDE_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 800,
+        system: SYSTEM,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: imgType, data: imgB64 } },
+            { type: 'text', text: 'Analiza este screenshot y responde con el JSON.' }
+          ]
+        }]
+      })
+    });
+
+    const data = await res.json();
+    const raw = data.content[0].text.trim().replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(raw);
+
+    if (!parsed.prospect_id) {
+      showStatus('error', 'No identifiqué el prospecto: ' + (parsed.error || 'número o nombre no encontrado en la lista'));
+      setStep(1);
+      setBusy(false);
+      return;
+    }
+
+    renderResult(parsed);
+    document.getElementById('stepLabel').textContent = 'Guardando en Railway...';
+    await saveToRailway(parsed);
+    setStep(3);
+    document.getElementById('stepLabel').textContent = '✓ Listo — puedes pegar el siguiente screenshot';
+
+  } catch(err) {
+    showStatus('error', 'Error: ' + err.message);
+    setStep(1);
+  }
+  setBusy(false);
+}
+
+function renderResult(d) {
+  document.getElementById('resName').textContent = d.prospect_name;
+  document.getElementById('resId').textContent = d.prospect_id;
+  const badge = document.getElementById('resBadge');
+  badge.textContent = d.status;
+  badge.className = `badge badge-${d.status.toLowerCase()}`;
+  document.getElementById('resNote').textContent = d.note;
+  document.getElementById('resultBox').classList.add('show');
+  if (d.reply) {
+    document.getElementById('replyText').textContent = d.reply;
+    document.getElementById('replyBox').classList.add('show');
+  }
+}
+
+async function saveToRailway(d) {
+  showStatus('loading', 'Guardando en Railway...');
+  try {
+    const allRes = await fetch(RAILWAY);
+    const all = await allRes.json();
+    const current = all.find(p => p.id === d.prospect_id);
+    const today = new Date().toLocaleDateString('es-MX', {day:'numeric',month:'short'});
+    const newNote = current?.notes
+      ? `${current.notes} | [${today}] ${d.note}`
+      : `[${today}] ${d.note}`;
+
+    const put = await fetch(`${RAILWAY}/${d.prospect_id}`, {
+      method: 'PUT',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({status: d.status, notes: newNote})
+    });
+    if (!put.ok) throw new Error(`HTTP ${put.status}`);
+
+    showStatus('success', `✓ ${d.prospect_name} actualizado en Railway — ${d.status}`);
+    addHistory(d);
+  } catch(err) {
+    showStatus('error', 'Error Railway: ' + err.message);
+  }
+}
+
+function addHistory(d) {
+  const time = new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+  history.unshift({...d, time});
+  document.getElementById('histCount').textContent = history.length + ' registro' + (history.length !== 1 ? 's' : '');
+  document.getElementById('histList').innerHTML = history.map(h => `
+    <div class="history-item">
+      <span class="history-time">${h.time}</span>
+      <div class="history-main">
+        <div class="history-name">${h.prospect_name} <span class="badge badge-${h.status.toLowerCase()}" style="margin-left:4px">${h.status}</span></div>
+        <div class="history-note">${h.note}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function setBusy(on) {
+  document.getElementById('analyzeBtn').disabled = on;
+  document.getElementById('spinner').style.display = on ? 'block' : 'none';
+  document.getElementById('btnText').textContent = on ? 'Procesando...' : 'Analizar y actualizar CRM';
+}
+
+function showStatus(type, msg) {
+  const b = document.getElementById('statusBar');
+  b.className = `status-bar show ${type}`;
+  b.textContent = msg;
+}
+
+function copyReply() {
+  navigator.clipboard.writeText(document.getElementById('replyText').textContent).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = '✓ Copiado'; btn.classList.add('done');
+    setTimeout(() => { btn.textContent = 'Copiar'; btn.classList.remove('done'); }, 2000);
+  });
+}
+
+function setStep(n) {
+  [1,2,3].forEach(i => {
+    document.getElementById('step'+i).className = 'step ' + (i<n?'done':i===n?'active':'');
+  });
+}
+
+function clearAll() {
+  clearImg(null);
+  clearResults();
+  setStep(1);
+}
+</script>
+</body>
+</html>
